@@ -335,18 +335,13 @@ message "WAYBACKURLS%20Done%20for%20$1"
 sleep 5
 
 echo "[+] Scanning for Virtual Hosts Resolution [+]"
-vhost_ports=`cat ~/recon/$1/$1-masscan.txt | grep 'Host:' | awk {'print $5'} | awk -F '/' {'print $1'} | sort -u | paste -s -d ' '`
-declare -a vhost=($vhost_ports)
-cat ~/recon/$1/$1-alive.txt ~/VHostScan/vhost-wordlist.txt | sort -u >> ~/recon/$1/$1-temp-vhost-wordlist.txt
-for test in `cat ~/recon/$1/$1-ip.txt`; do
-	for p in ${vhost[@]}; do
-		VHostScan -t $test -b $1 -r 80 -p $p -v --fuzzy-logic --waf --random-agent -w ~/recon/$1/$1-temp-vhost-wordlist.txt -oN ~/recon/$1/virtual-hosts/initial-$test_$p.txt
-		VHostScan -t $test -b $1 -p $p -r 80 -v --fuzzy-logic --waf --ssl --random-agent -w ~/recon/$1/$1-temp-vhost-wordlist.txt -oN ~/recon/$1/virtual-hosts/ssl-$test_$p.txt
-		cat ~/recon/$1/virtual-hosts/initial-$test_$p.txt ~/recon/$1/virtual-hosts/ssl-$test_$p.txt >> ~/recon/$1/virtual-hosts/final-$test.txt
-	done
+cat ~/recon/$1/$1-final.txt | tok | sort -u >> ~/recon/$1/$1-vhost-wordlist.txt
+for test in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'}`; do
+	test_case=`curl -sk "http://$test" -H "Host: givemesomebountyplz.$1" | wc -c`
+	ffuf -c -w ~/recon/$1/$1-vhost-wordlist.txt -u https://$test -k -H "Host: FUZZ" -fs $test_case -o ~/recon/virtual-hosts/$test.txt
 done
 message "Virtual%20Host(s)%20done%20for%20$1"
-rm ~/recon/$1/$1-temp-vhost-wordlist.txt ~/recon/$1/virtual-hosts/initial-* ~/recon/$1/virtual-hosts/ssl-*
+rm ~/recon/$1/$1-temp-vhost-wordlist.txt 
 sleep 5
 
 echo "[+] DirSearch Scanning for Sensitive Files [+]"

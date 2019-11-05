@@ -14,7 +14,8 @@ go get github.com/subfinder/subfinder
 go get github.com/OJ/gobuster
 go get github.com/lc/otxurls
 go get github.com/tomnomnom/waybackurls
-go get github.com/hacks/filter-resolved
+go get github.com/tomnomnom/hacks/filter-resolved
+go get -u github.com/tomnomnom/hacks/tok
 
 #Sensitive-File-Explorer
 git clone https://github.com/phspade/Sensitive-File-Explorer.git ~/tools/Sensitive-File-Explorer
