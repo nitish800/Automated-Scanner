@@ -195,21 +195,6 @@ else
 fi
 sleep 5
 
-echo "[+] SUBOVER for Subdomain TKO [+]"
-if [ ! -f ~/recon/$1/$1-subover.txt ] && [ ! -z $(which SubOver) ]; then
-	[ ! -f ~/recon/$1/providers.json ] && wget "https://raw.githubusercontent.com/Ice3man543/SubOver/master/providers.json" -O ~/recon/$1/providers.json
-	cd ~/recon/$1/
-	SubOver -l ~/recon/$1/$1-alive.txt -timeout 15 >> ~/recon/$1/$1-subtemp.txt
-	SubOver -l ~/recon/$1/$1-alive.txt -timeout 15 -https >> ~/recon/$1/$1-subtmp.txt
-	cat ~/recon/$1/$1-subtemp.txt ~/recon/$1/$1-subtmp.txt | sort -u > ~/recon/$1/$1-subover.txt
-	rm ~/recon/$1/$1-subtemp.txt ~/recon/$1/$1-subtmp.txt
-	message "Subover%20scanner%20done%20for%20$1"
-else
-	message "[-]%20Skipping%20subover%20Scanning%20for%20$1"
-	echo "[!] Skipping ..."
-fi
-sleep 5
-
 echo "[+] SUBJACK for Subdomain TKO [+]"
 if [ ! -f ~/recon/$1/$1-subjack.txt ] && [ ! -z $(which subjack) ]; then
 	[ ! -f ~/scanner/fingerprints.json ] && wget "https://raw.githubusercontent.com/sumgr0/subjack/master/fingerprints.json" -O ~/scanner/fingerprints.json
@@ -223,11 +208,6 @@ else
 	echo "[!] Skipping ..."
 fi
 sleep 5
-
-# echo "[+] SCANNING CRLF [+]"
-# python3 ~/tools/CRLF-Injection-Scanner/crlf_scan.py -i ~/recon/$1/$1-alive.txt -o ~/recon/$1/$1-crlf.txt
-# message "CRLF%20Scanning%20done%20for%20$1"
-# sleep 5
 
 declare -a protocol=("http" "https")
 echo "[+] COLLECTING ENDPOINTS [+]"

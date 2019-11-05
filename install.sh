@@ -4,11 +4,15 @@
 
 # amass, subfinder, snapd, aquatone, project sonar, grepcidr, gobuster, masscan, nmap, sensitive.py, curl, otxurls, waybackurls, DirSearch, LinkFinder, ffuf
 
-apt-get install pv curl wget grepcidr snapd nmap masscan sublist3r
+apt-get install pv curl wget grepcidr snapd nmap masscan rust
 
 export PATH=$PATH:/snap/bin #setup snap
 service snapd start #starting snap services
 sudo snap install amass #installing amass via snap
+
+#install findomain from https://github.com/Edu4rdSHL/findomain
+
+gem install aquatone
 
 go get github.com/subfinder/subfinder
 go get github.com/OJ/gobuster
@@ -17,6 +21,7 @@ go get github.com/tomnomnom/waybackurls
 go get github.com/tomnomnom/hacks/filter-resolved
 go get github.com/tomnomnom/hacks/tok
 go get github.com/ffuf/ffuf
+go get github.com/sumgr0/subjack
 
 #Sensitive-File-Explorer
 git clone https://github.com/phspade/Sensitive-File-Explorer.git ~/tools/Sensitive-File-Explorer
@@ -28,11 +33,6 @@ cd ~/tools/massdns
 make
 sudo cp ~/tools/massdns/bin/massdns /usr/bin
 
-#CRLF-Scanner
-git clone https://github.com/random-robbie/CRLF-Injection-Scanner.git ~/tools/CRLF-Injection-Scanner
-cd ~/tools/CRLF-Injection-Scanner
-pip3 install -r requirements.txt
-
 #dirsearch
 git clone https://github.com/maurosoria/dirsearch.git
 
@@ -43,8 +43,7 @@ cd ~/tools/LinkFinder
 python setup.py install
 pip3 install -r requirements.txt
 
-#vhostscan
-git clone https://github.com/codingo/VHostScan.git ~/tools/VHostScan
-cd ~/tools/VHostScan
-python3 setup.py install
-pip3 install -r requirements.txt
+#Sublist3r
+git clone https://github.com/aboul3la/Sublist3r ~/tools/Sublist3r
+cd ~/tools/Sublist3r
+sudo pip3 install -r requirements.txt
