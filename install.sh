@@ -2,7 +2,7 @@
 
 #requirements for running scanner.sh
 
-# amass, subfinder, snapd, aquatone, project sonar, grepcidr, gobuster, masscan, nmap, sensitive.py, curl, CRLF-Injection-Scanner, otxurls, waybackurls, DirSearch, LinkFinder, VHostScan
+# amass, subfinder, snapd, aquatone, project sonar, grepcidr, gobuster, masscan, nmap, sensitive.py, curl, otxurls, waybackurls, DirSearch, LinkFinder, ffuf
 
 apt-get install pv curl wget grepcidr snapd nmap masscan sublist3r
 
@@ -15,7 +15,8 @@ go get github.com/OJ/gobuster
 go get github.com/lc/otxurls
 go get github.com/tomnomnom/waybackurls
 go get github.com/tomnomnom/hacks/filter-resolved
-go get -u github.com/tomnomnom/hacks/tok
+go get github.com/tomnomnom/hacks/tok
+go get github.com/ffuf/ffuf
 
 #Sensitive-File-Explorer
 git clone https://github.com/phspade/Sensitive-File-Explorer.git ~/tools/Sensitive-File-Explorer
