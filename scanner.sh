@@ -301,7 +301,7 @@ sleep 5
 
 echo "[+] DirSearch Scanning for Sensitive Files [+]"
 [ ! -f ~/newlist.txt ] && echo "visit https://github.com/phspade/Combined-Wordlists/"
-for u in `cat ~/recon/$1/$1-alive.txt`;do python3 ~/dirsearch/dirsearch.py -u $u -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config -x 400,301,404,303,403,500,406,503 -t 50 --http-method=POST --random-agents -b -w ~/newlist.txt --plain-text-report ~/recon/$1/dirsearch/$u-dirsearch.txt;done
+for u in `cat ~/recon/$1/$1-alive.txt`;do python3 ~/tools/dirsearch/dirsearch.py -u $u -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config -x 400,301,404,303,403,500,406,503 -t 50 --http-method=POST --random-agents -b -w ~/newlist.txt --plain-text-report ~/recon/$1/dirsearch/$u-dirsearch.txt;done
 sleep 5
 
 [ ! -f ~/recon/$1.out ] && mv $1.out ~/recon/$1/ 
