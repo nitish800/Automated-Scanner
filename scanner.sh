@@ -142,19 +142,6 @@ rm ~/recon/$1/$1-amass.txt ~/recon/$1/$1-findomain.txt ~/recon/$1/$1-project-son
 touch ~/recon/$1/$1-ipz.txt
 sleep 5
 
-# echo "[+] DNSGEN SCANNING [+]"
-# if [ ! -f ~/recon/$1/$1-dnsgen.txt ] && [ ! -z $(which dnsgen) ]; then
-# 	[ ! -f ~/scanner/dnsgen.txt ] && wget "https://raw.githubusercontent.com/infosec-au/altdns/master/words.txt" -O ~/scanner/dnsgen.txt
-# 	cat ~/recon/$1/$1-final.txt | dnsgen -w ~/scanner/dnsgen.txt - >> ~/recon/$1/$1-dnsgen.txt
-# 	sleep 3
-# 	dnsgens=`scanned ~/recon/$1/$1-dnsgen.txt`
-# 	message "DNSGEN%20Found%20$dnsgens%20subdomain(s)%20for%20$1"
-# else
-# 	message "[-]%20Skipping%20DNSGEN%20Scanning%20for%20$1"
-# 	echo "[!] Skipping ..."
-# fi
-# sleep 5
-
 echo "[+] DNSGEN SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-dnsgen.txt ] && [ ! -z $(which dnsgen) ]; then
 	[ ! -f ~/recon/scanner/dnsgen.txt ] && wget "https://raw.githubusercontent.com/infosec-au/altdns/master/words.txt" -O ~/recon/scanner/dnsgen.txt
@@ -195,18 +182,6 @@ message "$ipz%20non-cloudflare%20IPs%20has%20been%20$collected%20in%20$1%20out%2
 rm ~/recon/$1/$1-ipz.txt
 cat ~/recon/$1/$1-ip.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 sleep 5
-
-# echo "[+] HTTPROBE Scanning for Alive Hosts [+]"
-# if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
-# 	cat ~/recon/$1/$1-all.txt | httprobe | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u >> ~/recon/$1/$1-httprobe.txt
-# 	alivesu=`scanned ~/recon/$1/$1-httprobe.txt`
-# 	rm ~/recon/$1/$1-all.txt ~/recon/$1/$1-final.txt
-# 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
-# else
-# 	message "[-]%20Skipping%20httprobe%20Scanning%20for%20$1"
-# 	echo "[!] Skipping ..."
-# fi
-# sleep 5
 
 echo "[+] Filter-Resolved Scanning for Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which httprobe) ]; then
