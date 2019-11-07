@@ -60,8 +60,7 @@ I hope that someone could help me to add more useful automated scanning techniqu
 
 # Future Tools to be added
 
-* findomain
->Still waiting to finish the implementation of other APIs here.
+* ~~findomain~~
 
 * A Param Miner like tool
 >A parameter bruteforcer, maybe [parameth](https://github.com/mak-/parameth) will do.
@@ -75,5 +74,6 @@ I hope that someone could help me to add more useful automated scanning techniqu
 
 ### Need a Digitalocean?
 
-You can help me by registering an account [here](https://m.do.co/c/9d633afb889b) *(with my referral code of course)* and you can also help me (slash) support me in this project.
+You can help me by registering an account [here](https://m.do.co/c/fe0df391a623) *(with my referral code of course)* and you can also help me (slash) support me in this project.
 
+Or Buy Me Coffee [here] (https://www.buymeacoffee.com/T6URjQu3s)

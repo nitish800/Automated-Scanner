@@ -23,7 +23,7 @@ scanned () {
 	cat $1 | sort -u | wc -l
 }
 
-message="[+] Initiating%20scan%20:%20$1 [+]"
+message "Initiating%20scan%20:%20$1"
 
 echo "[+] AMASS SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-amass.txt ] && [ ! -z $(which amass) ]; then
@@ -48,6 +48,8 @@ else
 	echo "[!] Skipping ..."
 fi
 sleep 5
+
+# spyse -target $1 --subdomains >> ~/recon/$1/$1-spyse.txt
 
 echo "[+] SUBFINDER SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-subfinder.txt ] && [ ! -z $(which subfinder) ]; then
@@ -164,30 +166,58 @@ all=`scanned ~/recon/$1/$1-final.txt`
 message "Almost%20$all%20Collected%20Subdomains%20for%20$1"
 sleep 3
 
-# collecting all IP from collected subdomains
-ulimit -n 800000
-while read -r domain; do dig +short $domain | grep -v '[[:alpha:]]' >> ~/recon/$1/$1-ipf.txt &; done < ~/recon/$1/$1-final.txt
-cat ~/recon/$1/$1-ipf.txt | sort -u >> ~/recon/$1/$1-ipz.txt
-rm ~/recon/$1/$1-ipf.txt
+# # collecting all IP from collected subdomains
+# ulimit -n 800000
+# while read -r domain; do dig +short $domain | grep -v '[[:alpha:]]' >> ~/recon/$1/$1-ipf.txt &; done < ~/recon/$1/$1-final.txt
+# cat ~/recon/$1/$1-ipf.txt | sort -u >> ~/recon/$1/$1-ipz.txt
+# rm ~/recon/$1/$1-ipf.txt
 
-## segregating cloudflare IP from non-cloudflare IP
+# ## segregating cloudflare IP from non-cloudflare IP
+# ## non-sense if I scan cloudflare IP. :(
+# iprange="173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/12 172.64.0.0/13 131.0.72.0/22"
+# for ip in `cat ~/recon/$1/$1-ipz.txt`; do
+# 	grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "$ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ip.txt
+# done
+# ipz=`scanned ~/recon/$1/$1-ip.txt`
+# ip_old=`scanned ~/recon/$1/$1-ipz.txt`
+# message "$ipz%20non-cloudflare%20IPs%20has%20been%20$collected%20in%20$1%20out%20of%20$ip_old%20IPs"
+# rm ~/recon/$1/$1-ipz.txt
+# cat ~/recon/$1/$1-ip.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
+# sleep 5
+
+# collecting all IP from collected subdomains & segregating cloudflare IP from non-cloudflare IP
 ## non-sense if I scan cloudflare IP. :(
-iprange="173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/12 172.64.0.0/13 131.0.72.0/22"
-for ip in `cat ~/recon/$1/$1-ipz.txt`; do
-	grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "$ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ip.txt
-done
-ipz=`scanned ~/recon/$1/$1-ip.txt`
-ip_old=`scanned ~/recon/$1/$1-ipz.txt`
-message "$ipz%20non-cloudflare%20IPs%20has%20been%20$collected%20in%20$1%20out%20of%20$ip_old%20IPs"
-rm ~/recon/$1/$1-ipz.txt
+ulimit -n 800000
+iprange="173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/12 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32"
+while read -r domain; do 
+    ip=`dig +short $domain | grep -v '[[:alpha:]]'`
+    grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "$ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ipf.txt & ;
+done < ~/recon/$1/$1-final.txt
+
+cat ~/recon/$1/$1-ipf.txt | sort -u | sed '/^[[:space:]]*$/d' > ~/recon/$1/$1-ip.txt
+
+ip=`scanned ~/recon/$1/$1-ip.txt`
+ip_old=`scanned ~/recon/$1/$1-ipf.txt`
+message "$ip%20non-cloudflare%20IPs%20has%20been%20$collected%20in%20$1%20out%20of%20$ip_old%20IPs"
+rm ~/recon/$1/$1-ipf.txt
 cat ~/recon/$1/$1-ip.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 sleep 5
 
 echo "[+] Filter-Resolved Scanning for Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which httprobe) ]; then
 	cat ~/recon/$1/$1-all.txt | filter-resolved | sort -u >> ~/recon/$1/$1-alive.txt
-	alivesu=`scanned ~/recon/$1/$1-alive.txt`
-	rm ~/recon/$1/$1-all.txt ~/recon/$1/$1-final.txt
+	aliveres=`scanned ~/recon/$1/$1-alive.txt`
+	message "$aliveres%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
+else
+	message "[-]%20Skipping%20httprobe%20Scanning%20for%20$1"
+	echo "[!] Skipping ..."
+fi
+sleep 5
+
+echo "[+] HTTPROBE Scanning for Alive Hosts [+]"
+if [ ! -f ~/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
+	cat ~/$1/$1-all.txt | httprobe | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u >> ~/$1/$1-httprobe.txt
+	alivesu=`scanned ~/$1/$1-httprobe.txt`
 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 else
 	message "[-]%20Skipping%20httprobe%20Scanning%20for%20$1"
@@ -209,12 +239,9 @@ else
 fi
 sleep 5
 
-declare -a protocol=("http" "https")
 echo "[+] COLLECTING ENDPOINTS [+]"
-for urlz in `cat ~/recon/$1/$1-alive.txt`; do 
-	for protoc in ${protocol[@]}; do
-		python ~/LinkFinder/linkfinder.py -i $protoc://$urlz -d -o ~/recon/$1/endpoints/$protoc_$urlz-result.html
-	done
+for urlz in `cat ~/recon/$1/$1-httprobe.txt`; do 
+		python ~/tools/LinkFinder/linkfinder.py -i $urlz -d -o ~/recon/$1/endpoints/$urlz-result.html
 done
 message "Done%20collecting%20endpoint%20in%20$1"
 sleep 5
@@ -300,8 +327,8 @@ rm ~/recon/$1/$1-temp-vhost-wordlist.txt
 sleep 5
 
 echo "[+] DirSearch Scanning for Sensitive Files [+]"
-[ ! -f ~/newlist.txt ] && echo "visit https://github.com/phspade/Combined-Wordlists/"
-for u in `cat ~/recon/$1/$1-alive.txt`;do python3 ~/tools/dirsearch/dirsearch.py -u $u -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config -x 400,301,404,303,403,500,406,503 -t 50 --http-method=POST --random-agents -b -w ~/newlist.txt --plain-text-report ~/recon/$1/dirsearch/$u-dirsearch.txt;done
+[ ! -f ~/wordlists/newlist.txt ] && echo "visit https://github.com/phspade/Combined-Wordlists/"
+for u in `cat ~/recon/$1/$1-httprobe.txt`;do python3 ~/tools/dirsearch/dirsearch.py -u $u -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config -x 400,301,404,303,403,500,406,503 -t 50 --http-method=POST --random-agents -b -w ~/newlist.txt --plain-text-report ~/recon/$1/dirsearch/$u-dirsearch.txt;done
 sleep 5
 
 [ ! -f ~/recon/$1.out ] && mv $1.out ~/recon/$1/ 
