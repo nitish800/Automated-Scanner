@@ -53,9 +53,9 @@ echo "[+] SPYSE SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-spyse.txt ] && [ ! -z $(which spyse) ]; then
 	spyse -target $1 --subdomains | sed '1,12d' > ~/recon/$1/$1-spyse.txt
 	spysescan=`scanned ~/recon/$1/$1-spyse.txt`
-	message "Findomain%20Found%20$spysescan%20subdomain(s)%20for%20$1"
+	message "Spyse%20Found%20$spysescan%20subdomain(s)%20for%20$1"
 else
-	message "[-]%20Skipping%20Findomain%20$spysescan%20previously%20discovered%20for%20$1"
+	message "[-]%20Skipping%20Spyse%20$spysescan%20previously%20discovered%20for%20$1"
 	echo "[!] Skipping ..."
 fi
 sleep 5
