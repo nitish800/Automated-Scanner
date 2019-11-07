@@ -1,4 +1,4 @@
-[![Follow on Twitter](https://img.shields.io/twitter/follow/phspades.svg?logo=twitter)](https://twitter.com/phspades)
+[![Follow on Twitter](https://img.shields.io/twitter/follow/sumgr0.svg?logo=twitter)](https://twitter.com/sumgr0)
 # Automated-Scanner
 
 Usage: `~$ bash scanner.sh example.com`
