@@ -76,4 +76,4 @@ I hope that someone could help me to add more useful automated scanning techniqu
 
 You can help me by registering an account [here](https://m.do.co/c/fe0df391a623) *(with my referral code of course)* and you can also help me (slash) support me in this project.
 
-Or Buy Me Coffee [here] (https://www.buymeacoffee.com/T6URjQu3s)
+Or Buy Me Coffee [here](https://www.buymeacoffee.com/T6URjQu3s)
