@@ -80,7 +80,7 @@ if [ ! -f ~/aquatone/$1/urls.txt ] && [ ! -z $(which aquatone-discover) ] && [ !
 	aquatonescan=`scanned ~/recon/$1/$1-aquatone.txt`
 	message "Aquatone%20Found%20$aquatonescan%20subdomain(s)%20for%20$1"
 	echo "[+] Done"
-elif
+elif [  -f ~/aquatone/$1/urls.txt ]; then
 	for domains in `cat ~/aquatone/$1/urls.txt`; do domain="${domains#*://}"; domainx="${domain%/*}"; domainz="${domainx%:*}"; echo $domainz >> ~/recon/$1/$1-aquatone.txt;done
 	aquatonescan=`scanned ~/recon/$1/$1-aquatone.txt`
 	message "Aquatone%20Found%20$aquatonescan%20subdomain(s)%20for%20$1"
@@ -221,15 +221,15 @@ if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which httprobe) ]; then
 	aliveres=`scanned ~/recon/$1/$1-alive.txt`
 	message "$aliveres%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 else
-	message "[-]%20Skipping%20httprobe%20Scanning%20for%20$1"
+	message "[-]%20Skipping%20Filter-Resolved%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
 fi
 sleep 5
 
-echo "[+] HTTPROBE Scanning for Alive Hosts [+]"
-if [ ! -f ~/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
-	cat ~/$1/$1-all.txt | httprobe | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u >> ~/$1/$1-httprobe.txt
-	alivesu=`scanned ~/$1/$1-httprobe.txt`
+echo "[+] HTTPROBE Scanning for HTTP Hosts [+]"
+if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
+	cat ~/recon/$1/$1-all.txt | httprobe | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u >> ~/recon/$1/$1-httprobe.txt
+	alivesu=`scanned ~/recon/$1/$1-httprobe.txt`
 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 else
 	message "[-]%20Skipping%20httprobe%20Scanning%20for%20$1"
@@ -259,14 +259,14 @@ message "Done%20collecting%20endpoint%20in%20$1"
 sleep 5
 
 echo "[+] MASSDNS SCANNING [+]"
-massdns -r ~/tools/massdns/lists/resolvers.txt ~/recon/$1/$1-alive.txt -o S > ~/recon/$1/$1-massdns.txt
+massdns -r ~/tools/massdns/lists/nameservers.txt ~/recon/$1/$1-alive.txt -o S > ~/recon/$1/$1-massdns.txt
 message "Done%20Massdns%20Scanning%20for%20$1"
 sleep 5
 
 echo "[+] MASSCAN PORT SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-masscan.txt ] && [ ! -z $(which masscan) ]; then
 	echo $passwordx | sudo -S masscan -p1-65535 -iL ~/recon/$1/$1-ip.txt --max-rate 10000 -oG ~/recon/$1/$1-masscan.txt
-	mass=`scanned $1/$1-ip.txt`
+	mass=`scanned ~/recon/$1/$1-ip.txt`
 	message "Masscan%20Scanned%20$mass%20IPs%20for%20$1"
 	echo "[+] Done"
 else
@@ -277,7 +277,7 @@ sleep 5
 
 big_ports=`cat ~/recon/$1/$1-masscan.txt | grep 'Host:' | awk {'print $5'} | awk -F '/' {'print $1'} | sort -u | paste -s -d ','`
 echo "[+] PORT SCANNING [+]"
-cat ~/recon/$1/$1-alive.txt | aquatone -ports $big_ports -out ~/recon/$1/$1-ports
+cat ~/recon/$1/$1-alive.txt | aquatone -ports $big_ports -chrome-path /snap/bin/chromium -out ~/recon/$1/$1-ports
 message "Done%20Aquatone%20Port%20Scanning%20for%20$1"
 sleep 5
 
@@ -308,7 +308,7 @@ sleep 5
 
 echo "[+] Scanning for Sensitive Files [+]"
 cp ~/recon/$1/$1-alive.txt ~/recon/$1/$1-sensitive.txt
-python ~/tools/Sensitive-File-Explorer/sensitive.py -u ~/recon/$1-sensitive.txt
+python2 ~/tools/Sensitive-File-Explorer/sensitive.py -u ~/recon/$1-sensitive.txt
 sens=`scanned ~/recon/$1-sensitive.txt`
 message "Sensitive%20File%20Scanned%20$sens%20asset(s)%20for%20$1"
 rm $1-sensitive.txt
@@ -335,12 +335,12 @@ for test in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'
 	ffuf -c -w ~/recon/$1/$1-vhost-wordlist.txt -u https://$test -k -H "Host: FUZZ" -fs $test_case -o ~/recon/virtual-hosts/$test.txt
 done
 message "Virtual%20Host(s)%20done%20for%20$1"
-rm ~/recon/$1/$1-temp-vhost-wordlist.txt 
+rm ~/recon/$1/$1-vhost-wordlist.txt 
 sleep 5
 
 echo "[+] DirSearch Scanning for Sensitive Files [+]"
 [ ! -f ~/wordlists/newlist.txt ] && echo "visit https://github.com/phspade/Combined-Wordlists/"
-for u in `cat ~/recon/$1/$1-httprobe.txt`;do python3 ~/tools/dirsearch/dirsearch.py -u $u -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config -x 400,301,404,303,403,500,406,503 -t 50 --http-method=POST --random-agents -b -w ~/newlist.txt --plain-text-report ~/recon/$1/dirsearch/$u-dirsearch.txt;done
+for u in `cat ~/recon/$1/$1-httprobe.txt`;do python3 ~/tools/dirsearch/dirsearch.py -u $u -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config -x 400,301,404,303,403,500,406,503 -t 50 --http-method=POST --random-agents -b -w ~/wordlists/newlist.txt --plain-text-report ~/recon/$1/dirsearch/$u-dirsearch.txt; done
 sleep 5
 
 [ ! -f ~/recon/$1.out ] && mv $1.out ~/recon/$1/ 
