@@ -14,6 +14,8 @@ sudo snap install amass #installing amass via snap
 
 gem install aquatone
 
+pip3 install spyse
+
 go get github.com/subfinder/subfinder
 go get github.com/OJ/gobuster
 go get github.com/lc/otxurls

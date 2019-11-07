@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# amass, subfinder, snapd, aquatone, project sonar, grepcidr, gobuster, masscan, nmap, sensitive.py, curl, CRLF-Injection-Scanner, otxurls, waybackurls, DirSearch, LinkFinder, VHostScan
+# amass, subfinder, snapd, aquatone, project sonar, grepcidr, gobuster, masscan, nmap, sensitive.py, curl, CRLF-Injection-Scanner, otxurls, waybackurls, DirSearch, LinkFinder, VHostScan, spyse
 
 passwordx=""
 
@@ -49,7 +49,16 @@ else
 fi
 sleep 5
 
-# spyse -target $1 --subdomains >> ~/recon/$1/$1-spyse.txt
+echo "[+] SPYSE SCANNING [+]"
+if [ ! -f ~/recon/$1/$1-spyse.txt ] && [ ! -z $(which spyse) ]; then
+	spyse -target $1 --subdomains | sed '1,12d' > ~/recon/$1/$1-spyse.txt
+	spysescan=`scanned ~/recon/$1/$1-spyse.txt`
+	message "Findomain%20Found%20$spysescan%20subdomain(s)%20for%20$1"
+else
+	message "[-]%20Skipping%20Findomain%20$spysescan%20previously%20discovered%20for%20$1"
+	echo "[!] Skipping ..."
+fi
+sleep 5
 
 echo "[+] SUBFINDER SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-subfinder.txt ] && [ ! -z $(which subfinder) ]; then
