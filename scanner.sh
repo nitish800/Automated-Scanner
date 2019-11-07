@@ -217,7 +217,7 @@ sleep 5
 
 echo "[+] Filter-Resolved Scanning for Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which httprobe) ]; then
-	cat ~/recon/$1/$1-all.txt | filter-resolved | sort -u >> ~/recon/$1/$1-alive.txt
+	cat ~/recon/$1/$1-all.txt | filter-resolved > ~/recon/$1/$1-alive.txt
 	aliveres=`scanned ~/recon/$1/$1-alive.txt`
 	message "$aliveres%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 else
