@@ -2,10 +2,32 @@
 
 # amass, subfinder, snapd, aquatone, project sonar, grepcidr, gobuster, masscan, nmap, sensitive.py, curl, CRLF-Injection-Scanner, otxurls, waybackurls, DirSearch, LinkFinder, VHostScan, spyse
 
+#!/bin/bash
+
+
+########################################
+# ///                                        \\\
+#  		You can edit your configuration here
+#
+# 
+########################################
+tbot=""
+tid=""
+# auquatoneThreads=5
+# subdomainThreads=10
+# dirsearchThreads=50
+# dirsearchWordlist=~/tools/dirsearch/db/dicc.txt
+# massdnsWordlist=~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt
+# chromiumPath=/snap/bin/chromium
+# scanner=~/recon/scanner
+########################################
+
 passwordx=""
 
 [ ! -f ~/recon/$1 ] && mkdir ~/recon/$1
 [ ! -f ~/recon/$1/dirsearch ] && mkdir ~/recon/$1/dirsearch
+[ ! -f ~/recon/$1/default-credential ] && mkdir ~/recon/$1/default-credential
+[ ! -f ~/recon/$1/whatweb ] && mkdir ~/recon/$1/whatweb
 [ ! -f ~/recon/$1/virtual-hosts ] && mkdir ~/recon/$1/virtual-hosts
 [ ! -f ~/recon/$1/endpoints ] && mkdir ~/recon/$1/endpoints
 [ ! -f ~/recon/$1/otxurls ] && mkdir ~/recon/$1/otxurls
@@ -13,8 +35,8 @@ passwordx=""
 sleep 5
 
 message () {
-	telegram_bot=""	
-	telegram_id=""
+	telegram_bot=$tbot	
+	telegram_id=$tid
 	alert="https://api.telegram.org/bot$telegram_bot/sendmessage?chat_id=$telegram_id&text="
 	[ -z $telegram_bot ] && [ -z $telegram_id ] || curl -g $alert$1 --silent > /dev/null
 }
@@ -23,7 +45,8 @@ scanned () {
 	cat $1 | sort -u | wc -l
 }
 
-message "Initiating%20scan%20:%20$1"
+#message "Initiating%20scan%20:%20$1"
+message "[+]%20Initiating%20scan%20%3A%20$1%20[+]"
 
 echo "[+] AMASS SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-amass.txt ] && [ ! -z $(which amass) ]; then
@@ -31,7 +54,7 @@ if [ ! -f ~/recon/$1/$1-amass.txt ] && [ ! -z $(which amass) ]; then
 	amass enum -passive -d $1 -o ~/recon/$1/$1-amass.txt
 	amasscan=`scanned ~/recon/$1/$1-amass.txt`
 	message "Amass%20Found%20$amasscan%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Amass Found $amasscan subdomains"
 else
 	message "[-]%20Skipping%20Amass%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -43,6 +66,7 @@ if [ ! -f ~/recon/$1/$1-findomain.txt ] && [ ! -z $(which findomain) ]; then
 	findomain -t $1 -q -u ~/recon/$1/$1-findomain.txt
 	findomainscan=`scanned ~/recon/$1/$1-findomain.txt`
 	message "Findomain%20Found%20$findomainscan%20subdomain(s)%20for%20$1"
+	echo "[+] Findomain Found $findomainscan subdomains"
 else
 	message "[-]%20Skipping%20Findomain%20$findomainscan%20previously%20discovered%20for%20$1"
 	echo "[!] Skipping ..."
@@ -54,6 +78,7 @@ if [ ! -f ~/recon/$1/$1-spyse.txt ] && [ ! -z $(which spyse) ]; then
 	spyse -target $1 --subdomains | sed '1,12d' > ~/recon/$1/$1-spyse.txt
 	spysescan=`scanned ~/recon/$1/$1-spyse.txt`
 	message "Spyse%20Found%20$spysescan%20subdomain(s)%20for%20$1"
+	echo "[+] Spyse Found $spysescan subdomains"
 else
 	message "[-]%20Skipping%20Spyse%20$spysescan%20previously%20discovered%20for%20$1"
 	echo "[!] Skipping ..."
@@ -65,7 +90,7 @@ if [ ! -f ~/recon/$1/$1-subfinder.txt ] && [ ! -z $(which subfinder) ]; then
 	subfinder -d $1 -nW -silent -o ~/recon/$1/$1-subfinder.txt
 	subfinderscan=`scanned ~/recon/$1/$1-subfinder.txt`
 	message "SubFinder%20Found%20$subfinderscan%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Subfinder Found $subfinderscan subdomains"
 else
 	message "[-]%20Skipping%20Subfinder%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -76,15 +101,15 @@ echo "[+] AQUATONE SCANNING [+]"
 if [ ! -f ~/aquatone/$1/urls.txt ] && [ ! -z $(which aquatone-discover) ] && [ ! -z $(which aquatone-scan) ]; then
 	aquatone-discover -d $1
 	aquatone-scan -d $1 -p huge
-	for domains in `cat ~/aquatone/$1/urls.txt`; do domain="${domains#*://}"; domainx="${domain%/*}"; domainz="${domainx%:*}"; echo $domainz >> ~/recon/$1/$1-aquatone.txt;done
+	for domains in `cat ~/aquatone/$1/urls.txt`; do domain="${domains#*://}"; domainx="${domain%/*}"; domainz="${domainx%:*}"; echo $domainz | sort -u >> ~/recon/$1/$1-aquatone.txt;done
 	aquatonescan=`scanned ~/recon/$1/$1-aquatone.txt`
 	message "Aquatone%20Found%20$aquatonescan%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Aquatone Found $aquatonescan subdomains"
 elif [  -f ~/aquatone/$1/urls.txt ]; then
-	for domains in `cat ~/aquatone/$1/urls.txt`; do domain="${domains#*://}"; domainx="${domain%/*}"; domainz="${domainx%:*}"; echo $domainz >> ~/recon/$1/$1-aquatone.txt;done
+	for domains in `cat ~/aquatone/$1/urls.txt`; do domain="${domains#*://}"; domainx="${domain%/*}"; domainz="${domainx%:*}"; echo $domainz | sort -u >> ~/recon/$1/$1-aquatone.txt;done
 	aquatonescan=`scanned ~/recon/$1/$1-aquatone.txt`
 	message "Aquatone%20Found%20$aquatonescan%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Aquatone Found $aquatonescan subdomains"
 else
 	message "[-]%20Skipping%20Aquatone%20Scanning%20for%20$1"
 	echo "[!] Skipping ..." 
@@ -96,7 +121,7 @@ if [ ! -f ~/recon/$1/$1-sublist3r.txt ] && [ -e ~/tools/Sublist3r/sublist3r.py ]
 	python ~/tools/Sublist3r/sublist3r.py -b -d $1 -o ~/recon/$1/$1-sublist3r.txt
 	sublist3rscan=`scanned ~/recon/$1/$1-sublist3r.txt`
 	message "Sublist3r%20Found%20$sublist3rscan%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Sublist3r Found $sublist3rscan subdomains"
 else
 	message "[-]%20Skipping%20Sublist3r%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -110,7 +135,7 @@ if [ ! -f ~/recon/$1/$1-project-sonar.txt ] && [ -e ~/recon/data/fdns_cname.json
 	#pv ~/reverse_dns.json.gz | pigz -dc | grep -E "*[.]$1\"," | jq -r '.value' | sort -u >> ~/recon/$1/$1-project-sonar.txt
 	projectsonar=$(scanned ~/recon/$1/$1-project-sonar.txt)
 	message "Project%20Sonar%20Found%20$projectsonar%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Project Sonar Found $projectsonar subdomains"
 else
 	message "[-]%20Skipping%20Project%20Sonar%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -128,7 +153,7 @@ if [ ! -f ~/recon/$1/$1-crt.txt ]; then
 	cat ~/recon/$1/$1-crt.txt | sort -u >> ~/recon/$1/$1-crtx.txt && rm ~/recon/$1/$1-crt.txt && mv ~/recon/$1/$1-crtx.txt ~/recon/$1/$1-crt.txt
 	crt=`scanned ~/recon/$1/$1-crt.txt`
 	message "CRT.SH%20Found%20$crt%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] CRT.sh Found $crt subdomains"
 else
 	message "[-]%20Skipping%20CRT.SH%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -143,7 +168,7 @@ if [ ! -f ~/recon/$1/$1-gobuster.txt ] && [ ! -z $(which gobuster) ]; then
 	rm ~/recon/$1/$1-gobust.txt
 	gobusterscan=`scanned ~/recon/$1/$1-gobuster.txt`
 	message "Gobuster%20Found%20$gobusterscan%20subdomain(s)%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Gobuster Found $gobusterscan subdomains"
 else
 	message "[-]%20Skipping%20Gobuster%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -165,7 +190,8 @@ if [ ! -f ~/recon/$1/$1-dnsgen.txt ] && [ ! -z $(which dnsgen) ]; then
 	rm ~/recon/$1/$1-dnsgen.tmp
 	sleep 3
 	dnsgens=`scanned ~/recon/$1/$1-dnsgen.txt`
-	message "DNSGEN%20Found%20$dnsgens%20subdomain(s)%20for%20$1"
+	message "DNSGEN%20generates%20$dnsgens%20subdomain(s)%20for%20$1"
+	echo "[+] DNSGEN generate $dnsgens subdomains"
 else
 	message "[-]%20Skipping%20DNSGEN%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -176,26 +202,8 @@ cat ~/recon/$1/$1-dnsgen.txt ~/recon/$1/$1-final.txt | sort -u >> ~/recon/$1/$1-
 rm ~/recon/$1/$1-final.txt && mv ~/recon/$1/$1-fin.txt ~/recon/$1/$1-final.txt
 all=`scanned ~/recon/$1/$1-final.txt`
 message "Almost%20$all%20Collected%20Subdomains%20for%20$1"
+echo "[+] $all collected subdomains"
 sleep 3
-
-# # collecting all IP from collected subdomains
-# ulimit -n 800000
-# while read -r domain; do dig +short $domain | grep -v '[[:alpha:]]' >> ~/recon/$1/$1-ipf.txt &; done < ~/recon/$1/$1-final.txt
-# cat ~/recon/$1/$1-ipf.txt | sort -u >> ~/recon/$1/$1-ipz.txt
-# rm ~/recon/$1/$1-ipf.txt
-
-# ## segregating cloudflare IP from non-cloudflare IP
-# ## non-sense if I scan cloudflare IP. :(
-# iprange="173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/12 172.64.0.0/13 131.0.72.0/22"
-# for ip in `cat ~/recon/$1/$1-ipz.txt`; do
-# 	grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "$ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ip.txt
-# done
-# ipz=`scanned ~/recon/$1/$1-ip.txt`
-# ip_old=`scanned ~/recon/$1/$1-ipz.txt`
-# message "$ipz%20non-cloudflare%20IPs%20has%20been%20$collected%20in%20$1%20out%20of%20$ip_old%20IPs"
-# rm ~/recon/$1/$1-ipz.txt
-# cat ~/recon/$1/$1-ip.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
-# sleep 5
 
 # collecting all IP from collected subdomains & segregating cloudflare IP from non-cloudflare IP
 ## non-sense if I scan cloudflare IP. :(
@@ -203,7 +211,7 @@ ulimit -n 800000
 iprange="173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/12 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32"
 while read -r domain; do 
     ip=`dig +short $domain | grep -v '[[:alpha:]]'`
-    grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "$ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ipf.txt &
+    grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "[!] $ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ipf.txt &
 done < ~/recon/$1/$1-final.txt
 
 cat ~/recon/$1/$1-ipf.txt | sort -u | sed '/^[[:space:]]*$/d' > ~/recon/$1/$1-ip.txt
@@ -211,6 +219,7 @@ cat ~/recon/$1/$1-ipf.txt | sort -u | sed '/^[[:space:]]*$/d' > ~/recon/$1/$1-ip
 ip=`scanned ~/recon/$1/$1-ip.txt`
 ip_old=`scanned ~/recon/$1/$1-ipf.txt`
 message "$ip%20non-cloudflare%20IPs%20has%20been%20$collected%20in%20$1%20out%20of%20$ip_old%20IPs"
+echo "[+] $ip non-cloudflare IPs has been collected out of $ip_old IPs!"
 rm ~/recon/$1/$1-ipf.txt
 cat ~/recon/$1/$1-ip.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 sleep 5
@@ -228,7 +237,7 @@ sleep 5
 
 echo "[+] HTTPROBE Scanning for HTTP Hosts [+]"
 if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
-	cat ~/recon/$1/$1-all.txt | httprobe | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u >> ~/recon/$1/$1-httprobe.txt
+	cat ~/recon/$1/$1-all.txt | httprobe -c 50 -t 3000 >> ~/recon/$1/$1-httprobe.txt
 	alivesu=`scanned ~/recon/$1/$1-httprobe.txt`
 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 else
@@ -239,9 +248,9 @@ sleep 5
 
 echo "[+] SUBJACK for Subdomain TKO [+]"
 if [ ! -f ~/recon/$1/$1-subjack.txt ] && [ ! -z $(which subjack) ]; then
-	[ ! -f ~/scanner/fingerprints.json ] && wget "https://raw.githubusercontent.com/sumgr0/subjack/master/fingerprints.json" -O ~/scanner/fingerprints.json
-	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/scanner/fingerprints.json -v -m -o ~/recon/$1/$1-subtemp.txt
-	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/scanner/fingerprints.json -v -m -ssl -o ~/recon/$1/$1-subtmp.txt
+	[ ! -f ~/recon/scanner/fingerprints.json ] && wget "https://raw.githubusercontent.com/sumgr0/subjack/master/fingerprints.json" -O ~/recon/scanner/fingerprints.json
+	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/recon/scanner/fingerprints.json -v -m -o ~/recon/$1/$1-subtemp.txt
+	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/recon/scanner/fingerprints.json -v -m -ssl -o ~/recon/$1/$1-subtmp.txt
 	cat ~/recon/$1/$1-subtemp.txt ~/recon/$1/$1-subtmp.txt | sort -u > ~/recon/$1/$1-subjack.txt
 	rm ~/recon/$1/$1-subtemp.txt ~/recon/$1/$1-subtmp.txt
 	message "subjack%20scanner%20done%20for%20$1"
@@ -251,16 +260,31 @@ else
 fi
 sleep 5
 
+echo "[+] TKO-SUBS for Subdomain TKO [+]"
+if [ ! -f ~/recon/$1/$1-subover.txt ] && [ ! -z $(which tko-subs) ]; then
+	[ ! -f ~/recon/scanner/providers-data.csv ] && wget "https://raw.githubusercontent.com/anshumanbh/tko-subs/master/providers-data.csv" -O ~/recon/scanner/providers-data.csv
+	tko-subs -domains=~/recon/$1/$1-alive.txt -data=~/recon/scanner/providers-data.csv -output=~/recon/$1/$1-tkosubs.txt
+	message "TKO-Subs%20scanner%20done%20for%20$1"
+	echo "[+] TKO-Subs scanner is done"
+else
+	message "[-]%20Skipping%20tko-subs%20Scanning%20for%20$1"
+	echo "[!] Skipping ..."
+fi
+sleep 5
+
 echo "[+] COLLECTING ENDPOINTS [+]"
 for urlz in `cat ~/recon/$1/$1-httprobe.txt`; do 
-		python ~/tools/LinkFinder/linkfinder.py -i $urlz -d -o ~/recon/$1/endpoints/$urlz-result.html
+	filename=`echo $urlz | sed 's/http:\/\///g' | sed 's/https:\/\//ssl-/g'`
+	python ~/tools/LinkFinder/linkfinder.py -i $urlz -d -o ~/recon/$1/endpoints/$filename-result.html
 done
 message "Done%20collecting%20endpoint%20in%20$1"
+echo "[+] Done collecting endpoint"
 sleep 5
 
 echo "[+] MASSDNS SCANNING [+]"
 massdns -r ~/tools/massdns/lists/nameservers.txt ~/recon/$1/$1-alive.txt -o S > ~/recon/$1/$1-massdns.txt
 message "Done%20Massdns%20Scanning%20for%20$1"
+echo "[+] Done massdns for scanning assets"
 sleep 5
 
 echo "[+] MASSCAN PORT SCANNING [+]"
@@ -268,7 +292,7 @@ if [ ! -f ~/recon/$1/$1-masscan.txt ] && [ ! -z $(which masscan) ]; then
 	echo $passwordx | sudo -S masscan -p1-65535 -iL ~/recon/$1/$1-ip.txt --max-rate 10000 -oG ~/recon/$1/$1-masscan.txt
 	mass=`scanned ~/recon/$1/$1-ip.txt`
 	message "Masscan%20Scanned%20$mass%20IPs%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Done masscan for scanning IPs"
 else
 	message "[-]%20Skipping%20Masscan%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -279,6 +303,7 @@ big_ports=`cat ~/recon/$1/$1-masscan.txt | grep 'Host:' | awk {'print $5'} | awk
 echo "[+] PORT SCANNING [+]"
 cat ~/recon/$1/$1-alive.txt | aquatone -ports $big_ports -chrome-path /snap/bin/chromium -out ~/recon/$1/$1-ports
 message "Done%20Aquatone%20Port%20Scanning%20for%20$1"
+echo "[+] Done aquatone for scanning IPs"
 sleep 5
 
 echo "[+] NMAP PORT SCANNING [+]"
@@ -288,7 +313,7 @@ if [ ! -f ~/recon/$1/$1-nmap.txt ] && [ ! -z $(which nmap) ]; then
 	nmaps=`scanned ~/recon/$1/$1-ip.txt`
 	xsltproc -o ~/recon/$1/$1-nmap.html ~/nmap-bootstrap.xsl ~/recon/$1/$1-nmap.xml
 	message "Nmap%20Scanned%20$nmaps%20IPs%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Done nmap for scanning IPs"
 else
 	message "[-]%20Skipping%20Nmap%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -296,10 +321,10 @@ fi
 sleep 5
 
 echo "[+] DEFAULT CREDENTIAL SCANNING [+]"
-if [ ! -f ~/recon/$1/$1-nmap.xml ] && [ -e ~/tools/changeme/changeme.py ]; then
-	python3 ~/tools/changeme/changeme.py ~/recon/$1/$1-nmap.xml -d --fresh -v --ssl -o ~/recon/$1/$1-changeme.csv
+if [ -e ~/changeme/changeme.py ] && [ "active" == `systemctl is-active redis` ]; then
+	for targets in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'}`; do python3 ~/tools/changeme/changeme.py --redishost redis --protocols http,snmp,ssh,ftp,memcached,mongo,mssql,mysql,postgres,telnet --portoverride $targets -d --fresh -v --ssl -o ~/recon/$1/default-credential/$targets-changeme.csv; done
 	message "Default%20Credential%20done%20for%20$1"
-	echo "[+] Done"
+	echo "[+] Done changeme for scanning default credentials"
 else
 	message "[-]%20Skipping%20Default%20Credential%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
@@ -314,11 +339,24 @@ message "Sensitive%20File%20Scanned%20$sens%20asset(s)%20for%20$1"
 rm $1-sensitive.txt
 sleep 5
 
+echo "[+] WHATWEB SCANNING FOR FINGERPRINTING [+]"
+if [ ! -z $(which whatweb) ]; then
+	for d in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F "/" {'print $1'}`;do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
+	for d in `cat ~/recon/$1/$1-alive.txt`; do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
+	message "Done%20whatweb%20for%20fingerprinting%20$1"
+	echo "[+] Done whatweb for fingerprinting the assets!"
+else
+	message "[-]%20Skipping%20whatweb%20for%20fingerprinting%20$1"
+	echo "[!] Skipping ..."
+fi
+sleep 5
+
 echo "[+] OTXURL Scanning for Archived Endpoints [+]"
 for u in `cat ~/recon/$1/$1-alive.txt`;do echo $u | otxurls | grep "$u" >> ~/recon/$1/otxurls/tmp-$u.txt; done
 cat ~/recon/$1/otxurls/* | sort -u >> ~/recon/$1/otxurls/$1-otxurl.txt 
 rm ~/recon/$1/otxurls/tmp-*
 message "OTXURL%20Done%20for%20$1"
+echo "[+] Done otxurls for discovering useful endpoints"
 sleep 5
 
 echo "[+] WAYBACKURLS Scanning for Archived Endpoints [+]"
@@ -326,22 +364,29 @@ for u in `cat ~/recon/$1/$1-alive.txt`;do echo $u | waybackurls | grep "$u" >> ~
 cat ~/recon/$1/waybackurls/* | sort -u >> ~/recon/$1/waybackurls/$1-waybackurls.txt 
 rm ~/recon/$1/waybackurls/tmp-*
 message "WAYBACKURLS%20Done%20for%20$1"
+echo "[+] Done waybackurls for discovering useful endpoints"
 sleep 5
 
 echo "[+] Scanning for Virtual Hosts Resolution [+]"
 cat ~/recon/$1/$1-final.txt | tok | sort -u >> ~/recon/$1/$1-vhost-wordlist.txt
+#cat ~/recon/$1/$1-final.txt ~/recon/$1/$1-all.txt ~/VHostScan/vhost-wordlist.txt | sort -u >> ~/recon/$1/$1-temp-vhost-wordlist.txt
 for test in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'}`; do
 	test_case=`curl -sk "http://$test" -H "Host: givemesomebountyplz.$1" | wc -c`
-	ffuf -c -w ~/recon/$1/$1-vhost-wordlist.txt -u https://$test -k -H "Host: FUZZ" -fs $test_case -o ~/recon/virtual-hosts/$test.txt
+	ffuf -c -w ~/recon/$1/$1-vhost-wordlist.txt -u http://$test -k -H "Host: FUZZ" -fs $test_case -o ~/recon/$1/virtual-hosts/$test.txt
+	ffuf -c -w ~/recon/$1/$1-vhost-wordlist.txt -u https://$test -k -H "Host: FUZZ" -fs $test_case -o ~/recon/$1/virtual-hosts/$test-ssl.txt
 done
 message "Virtual%20Host(s)%20done%20for%20$1"
+echo "[+] Done ffuf for scanning virtual hosts"
 rm ~/recon/$1/$1-vhost-wordlist.txt 
 sleep 5
 
 echo "[+] DirSearch Scanning for Sensitive Files [+]"
 [ ! -f ~/wordlists/newlist.txt ] && echo "visit https://github.com/phspade/Combined-Wordlists/"
-for u in `cat ~/recon/$1/$1-httprobe.txt`;do python3 ~/tools/dirsearch/dirsearch.py -u $u -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config -x 400,301,404,303,403,500,406,503 -t 50 --http-method=POST --random-agents -b -w ~/wordlists/newlist.txt --plain-text-report ~/recon/$1/dirsearch/$u-dirsearch.txt; done
+cat ~/recon/$1/$1-httprobe.txt | xargs -P10 -I % sh -c "python3 ~/tools/dirsearch/dirsearch.py -u % -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config,save,rsa,ppk -x 400,403,401,500,406,503,502 -t 100 --random-agents -b --plain-text-report ~/recon/$1/dirsearch/%-dirsearch.txt"
+echo "[+] Done dirsearch for file and directory scanning"
 sleep 5
 
-[ ! -f ~/recon/$1.out ] && mv $1.out ~/recon/$1/ 
+[ ! -f ~/$1.out ] && mv $1.out ~/recon/$1/ 
+
 message "Scanner%20Done%20for%20$1"
+echo "[+] Done scanner :)"
