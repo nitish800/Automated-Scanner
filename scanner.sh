@@ -5,23 +5,6 @@
 #!/bin/bash
 
 
-########################################
-# ///                                        \\\
-#  		You can edit your configuration here
-#
-# 
-########################################
-tbot=""
-tid=""
-# auquatoneThreads=5
-# subdomainThreads=10
-# dirsearchThreads=50
-# dirsearchWordlist=~/tools/dirsearch/db/dicc.txt
-# massdnsWordlist=~/tools/SecLists/Discovery/DNS/clean-jhaddix-dns.txt
-# chromiumPath=/snap/bin/chromium
-# scanner=~/recon/scanner
-########################################
-
 passwordx=""
 
 [ ! -f ~/recon/$1 ] && mkdir ~/recon/$1
@@ -35,8 +18,8 @@ passwordx=""
 sleep 5
 
 message () {
-	telegram_bot=$tbot	
-	telegram_id=$tid
+	telegram_bot=""
+	telegram_id=""
 	alert="https://api.telegram.org/bot$telegram_bot/sendmessage?chat_id=$telegram_id&text="
 	[ -z $telegram_bot ] && [ -z $telegram_id ] || curl -g $alert$1 --silent > /dev/null
 }
