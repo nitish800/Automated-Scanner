@@ -7,10 +7,13 @@
 
 passwordx=""
 
+[ ! -f ~/recon ] && mkdir ~/recon
 [ ! -f ~/recon/$1 ] && mkdir ~/recon/$1
+[ ! -f ~/recon/$1/whatweb ] && mkdir ~/recon/$1/whatweb
+[ ! -f ~/recon/$1/eyewitness ] && mkdir ~/recon/$1/eyewitness
+[ ! -f ~/recon/$1/shodan ] && mkdir ~/recon/$1/shodan
 [ ! -f ~/recon/$1/dirsearch ] && mkdir ~/recon/$1/dirsearch
 [ ! -f ~/recon/$1/default-credential ] && mkdir ~/recon/$1/default-credential
-[ ! -f ~/recon/$1/whatweb ] && mkdir ~/recon/$1/whatweb
 [ ! -f ~/recon/$1/virtual-hosts ] && mkdir ~/recon/$1/virtual-hosts
 [ ! -f ~/recon/$1/endpoints ] && mkdir ~/recon/$1/endpoints
 [ ! -f ~/recon/$1/otxurls ] && mkdir ~/recon/$1/otxurls
