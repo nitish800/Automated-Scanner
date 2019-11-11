@@ -33,8 +33,8 @@ message "[+]%20Initiating%20scan%20%3A%20$1%20[+]"
 
 echo "[+] AMASS SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-amass.txt ] && [ ! -z $(which amass) ]; then
-	#amass enum -active -brute -d $1 -o ~/recon/$1/$1-amass.txt -config ~/config.ini
-	amass enum -passive -d $1 -o ~/recon/$1/$1-amass.txt
+	amass enum -active -brute -d $1 -o ~/recon/$1/$1-amass.txt -config ~/config.ini
+	#amass enum -passive -d $1 -o ~/recon/$1/$1-amass.txt
 	amasscan=`scanned ~/recon/$1/$1-amass.txt`
 	message "Amass%20Found%20$amasscan%20subdomain(s)%20for%20$1"
 	echo "[+] Amass Found $amasscan subdomains"
@@ -146,7 +146,7 @@ sleep 5
 echo "[+] GOBUSTER SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-gobuster.txt ] && [ ! -z $(which gobuster) ]; then
 	[ ! -f ~/wordlists/all.txt ] && wget "https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt" -O ~/wordlists/all.txt
-	gobuster dns -d $1 -t 100 -w ~/wordlists/all.txt --wildcard -o ~/recon/$1/$1-gobust.txt
+	gobuster dns -d $1 -t 300 -w ~/wordlists/all.txt --wildcard -o ~/recon/$1/$1-gobust.txt
 	cat ~/recon/$1/$1-gobust.txt | grep "Found:" | awk {'print $2'} > ~/recon/$1/$1-gobuster.txt
 	rm ~/recon/$1/$1-gobust.txt
 	gobusterscan=`scanned ~/recon/$1/$1-gobuster.txt`
@@ -159,8 +159,8 @@ fi
 sleep 5
 
 ## Deleting all the results to less disk usage
-cat ~/recon/$1/$1-amass.txt ~/recon/$1/$1-findomain.txt ~/recon/$1/$1-project-sonar.txt ~/recon/$1/$1-subfinder.txt ~/recon/$1/$1-aquatone.txt ~/recon/$1/$1-sublist3r.txt ~/recon/$1/$1-crt.txt ~/recon/$1/$1-gobuster.txt | sort -uf > ~/recon/$1/$1-final.txt
-rm ~/recon/$1/$1-amass.txt ~/recon/$1/$1-findomain.txt ~/recon/$1/$1-project-sonar.txt ~/recon/$1/$1-subfinder.txt ~/recon/$1/$1-aquatone.txt ~/recon/$1/$1-sublist3r.txt ~/recon/$1/$1-crt.txt ~/recon/$1/$1-gobuster.txt
+cat ~/recon/$1/$1-amass.txt ~/recon/$1/$1-findomain.txt ~/recon/$1/$1-spyse.txt ~/recon/$1/$1-project-sonar.txt ~/recon/$1/$1-subfinder.txt ~/recon/$1/$1-aquatone.txt ~/recon/$1/$1-sublist3r.txt ~/recon/$1/$1-crt.txt ~/recon/$1/$1-gobuster.txt | sort -uf > ~/recon/$1/$1-final.txt
+rm ~/recon/$1/$1-amass.txt ~/recon/$1/$1-findomain.txt ~/recon/$1/$1-spyse.txt ~/recon/$1/$1-project-sonar.txt ~/recon/$1/$1-subfinder.txt ~/recon/$1/$1-aquatone.txt ~/recon/$1/$1-sublist3r.txt ~/recon/$1/$1-crt.txt ~/recon/$1/$1-gobuster.txt
 touch ~/recon/$1/$1-ipz.txt
 sleep 5
 
@@ -208,7 +208,7 @@ cat ~/recon/$1/$1-ip.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 sleep 5
 
 echo "[+] Filter-Resolved Scanning for Alive Hosts [+]"
-if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which httprobe) ]; then
+if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which filter-resolved) ]; then
 	cat ~/recon/$1/$1-all.txt | filter-resolved > ~/recon/$1/$1-alive.txt
 	aliveres=`scanned ~/recon/$1/$1-alive.txt`
 	message "$aliveres%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
@@ -220,7 +220,7 @@ sleep 5
 
 echo "[+] HTTPROBE Scanning for HTTP Hosts [+]"
 if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
-	cat ~/recon/$1/$1-all.txt | httprobe -c 50 -t 3000 >> ~/recon/$1/$1-httprobe.txt
+	cat ~/recon/$1/$1-all.txt | httprobe -c 50 > ~/recon/$1/$1-httprobe.txt
 	alivesu=`scanned ~/recon/$1/$1-httprobe.txt`
 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 else
@@ -228,6 +228,8 @@ else
 	echo "[!] Skipping ..."
 fi
 sleep 5
+
+diff --new-line-format="" --unchanged-line-format="" <(cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort) <(sort ~/recon/$1/$1-alive.txt)  > ~/recon/$1/$1-diff.txt
 
 echo "[+] SUBJACK for Subdomain TKO [+]"
 if [ ! -f ~/recon/$1/$1-subjack.txt ] && [ ! -z $(which subjack) ]; then
@@ -258,7 +260,7 @@ sleep 5
 echo "[+] COLLECTING ENDPOINTS [+]"
 for urlz in `cat ~/recon/$1/$1-httprobe.txt`; do 
 	filename=`echo $urlz | sed 's/http:\/\///g' | sed 's/https:\/\//ssl-/g'`
-	python ~/tools/LinkFinder/linkfinder.py -i $urlz -d -o ~/recon/$1/endpoints/$filename-result.html
+	python ~/tools/LinkFinder/linkfinder.py -i $urlz -d -o ~/recon/$1/endpoints/$filename.html
 done
 message "Done%20collecting%20endpoint%20in%20$1"
 echo "[+] Done collecting endpoint"
@@ -304,7 +306,7 @@ fi
 sleep 5
 
 echo "[+] DEFAULT CREDENTIAL SCANNING [+]"
-if [ -e ~/changeme/changeme.py ] && [ "active" == `systemctl is-active redis` ]; then
+if [ -e ~/tools/changeme/changeme.py ] && [ "active" == `systemctl is-active redis` ]; then
 	for targets in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'}`; do python3 ~/tools/changeme/changeme.py --redishost redis --protocols http,snmp,ssh,ftp,memcached,mongo,mssql,mysql,postgres,telnet --portoverride $targets -d --fresh -v --ssl -o ~/recon/$1/default-credential/$targets-changeme.csv; done
 	message "Default%20Credential%20done%20for%20$1"
 	echo "[+] Done changeme for scanning default credentials"
@@ -335,32 +337,35 @@ fi
 sleep 5
 
 echo "[+] OTXURL Scanning for Archived Endpoints [+]"
-for u in `cat ~/recon/$1/$1-alive.txt`;do echo $u | otxurls | grep "$u" >> ~/recon/$1/otxurls/tmp-$u.txt; done
-cat ~/recon/$1/otxurls/* | sort -u >> ~/recon/$1/otxurls/$1-otxurl.txt 
-rm ~/recon/$1/otxurls/tmp-*
+for u in `cat ~/recon/$1/$1-alive.txt`;do echo $u | otxurls | grep "$u" >> ~/recon/$1/otxurls/$u.tmp; done
+cat ~/recon/$1/otxurls/*.tmp | sort -u >> ~/recon/$1/otxurls/$1-otxurl.txt 
+rm ~/recon/$1/otxurls/*.tmp
 message "OTXURL%20Done%20for%20$1"
 echo "[+] Done otxurls for discovering useful endpoints"
 sleep 5
 
 echo "[+] WAYBACKURLS Scanning for Archived Endpoints [+]"
-for u in `cat ~/recon/$1/$1-alive.txt`;do echo $u | waybackurls | grep "$u" >> ~/recon/$1/waybackurls/tmp-$u.txt; done
-cat ~/recon/$1/waybackurls/* | sort -u >> ~/recon/$1/waybackurls/$1-waybackurls.txt 
-rm ~/recon/$1/waybackurls/tmp-*
+for u in `cat ~/recon/$1/$1-alive.txt`;do echo $u | waybackurls | grep "$u" >> ~/recon/$1/waybackurls/$u.tmp; done
+cat ~/recon/$1/waybackurls/*.tmp | sort -u >> ~/recon/$1/waybackurls/$1-waybackurls.txt 
+rm ~/recon/$1/waybackurls/*.tmp
 message "WAYBACKURLS%20Done%20for%20$1"
 echo "[+] Done waybackurls for discovering useful endpoints"
 sleep 5
 
 echo "[+] Scanning for Virtual Hosts Resolution [+]"
-cat ~/recon/$1/$1-final.txt | tok | sort -u >> ~/recon/$1/$1-vhost-wordlist.txt
-#cat ~/recon/$1/$1-final.txt ~/recon/$1/$1-all.txt ~/VHostScan/vhost-wordlist.txt | sort -u >> ~/recon/$1/$1-temp-vhost-wordlist.txt
-for test in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'}`; do
-	test_case=`curl -sk "http://$test" -H "Host: givemesomebountyplz.$1" | wc -c`
-	ffuf -c -w ~/recon/$1/$1-vhost-wordlist.txt -u http://$test -k -H "Host: FUZZ" -fs $test_case -o ~/recon/$1/virtual-hosts/$test.txt
-	ffuf -c -w ~/recon/$1/$1-vhost-wordlist.txt -u https://$test -k -H "Host: FUZZ" -fs $test_case -o ~/recon/$1/virtual-hosts/$test-ssl.txt
-done
-message "Virtual%20Host(s)%20done%20for%20$1"
-echo "[+] Done ffuf for scanning virtual hosts"
-rm ~/recon/$1/$1-vhost-wordlist.txt 
+if [ ! -z $(which ffuf) ]; then
+	[ ! -f ~/recon/scanner/virtual-host-scanning.txt ] && wget "https://raw.githubusercontent.com/codingo/VHostScan/master/VHostScan/wordlists/virtual-host-scanning.txt" -O ~/recon/scanner/virtual-host-scanning.txt
+	cat ~/recon/$1/$1-final.txt | tok | cat ~/recon/scanner/virtual-host-scanning.txt | sort -u >> ~/recon/$1/$1-temp-vhost-wordlist.txt
+	path=$(pwd)
+	ffuf -c -w "$path/recon/$1/$1-temp-vhost-wordlist.txt:HOSTS" -w "$path/recon/$1/$1-open-ports.txt:TARGETS" -u http://TARGETS -k -H "Host: HOSTS" -mc all -fc 500-599 -o ~/recon/$1/virtual-hosts/$1.txt
+	ffuf -c -w "$path/recon/$1/$1-temp-vhost-wordlist.txt:HOSTS" -w "$path/recon/$1/$1-open-ports.txt:TARGETS" -u https://TARGETS -k -H "Host: HOSTS" -mc all -fc 500-599 -o ~/recon/$1/virtual-hosts/$1-ssl.txt
+	message "Virtual%20Host(s)%20done%20for%20$1"
+	echo "[+] Done ffuf for scanning virtual hosts"
+else
+	message "[-]%20Skipping%20ffuf%20for%20vhost%20scanning"
+	echo "[!] Skipping ..."
+fi
+rm ~/recon/$1/$1-temp-vhost-wordlist.txt 
 sleep 5
 
 echo "[+] DirSearch Scanning for Sensitive Files [+]"
