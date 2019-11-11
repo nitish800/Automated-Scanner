@@ -210,28 +210,45 @@ rm ~/recon/$1/$1-ipf.txt
 cat ~/recon/$1/$1-ip.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 sleep 5
 
-echo "[+] Filter-Resolved Scanning for Alive Hosts [+]"
-if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which filter-resolved) ]; then
-	cat ~/recon/$1/$1-all.txt | filter-resolved > ~/recon/$1/$1-alive.txt
-	aliveres=`scanned ~/recon/$1/$1-alive.txt`
-	message "$aliveres%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
+echo "[+] MASSCAN PORT SCANNING [+]"
+if [ ! -f ~/recon/$1/$1-masscan.txt ] && [ ! -z $(which masscan) ]; then
+	masscan -p1-65535 -iL ~/recon/$1/$1-ip.txt --max-rate 10000 -oG ~/recon/$1/$1-masscan.txt
+	mass=`scanned ~/recon/$1/$1-ip.txt`
+	message "Masscan%20Scanned%20$mass%20IPs%20for%20$1"
+	echo "[+] Done masscan for scanning IPs"
 else
-	message "[-]%20Skipping%20Filter-Resolved%20Scanning%20for%20$1"
+	message "[-]%20Skipping%20Masscan%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
 fi
 sleep 5
 
-echo "[+] HTTPROBE Scanning for HTTP Hosts [+]"
+cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'} | sort -u > ~/recon/$1/$1-open-ports.txt  
+cat ~/recon/$1/$1-open-ports.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
+
+echo "[+] HTTProbe Scanning Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
-	cat ~/recon/$1/$1-all.txt | httprobe -c 50 > ~/recon/$1/$1-httprobe.txt
+	cat ~/$1/$1-all.txt | httprobe -c 50 > ~/recon/$1/$1-httprobe.txt
 	alivesu=`scanned ~/recon/$1/$1-httprobe.txt`
 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
+	echo "[+] $alivesu alive domains out of $all domains/IPs using httprobe"
 else
 	message "[-]%20Skipping%20httprobe%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
 fi
 sleep 5
 
+echo "[+] Scanning Alive Hosts [+]"
+if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which filter-resolved) ]; then
+	cat ~/recon/$1/$1-all.txt | filter-resolved > ~/recon/$1/$1-alive.txt
+	alivesu=`scanned ~/recon/$1/$1-alive.txt`
+	rm ~/recon/$1/$1-all.txt
+	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
+	echo "[+] $alivesu alive domains out of $all domains/IPs using filter-resolved"
+else
+	message "[-]%20Skipping%20filter-resolved%20Scanning%20for%20$1"
+	echo "[!] Skipping ..."
+fi
+sleep 5
 diff --new-line-format="" --unchanged-line-format="" <(cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort) <(sort ~/recon/$1/$1-alive.txt)  > ~/recon/$1/$1-diff.txt
 
 echo "[+] SUBJACK for Subdomain TKO [+]"
