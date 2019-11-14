@@ -5,7 +5,7 @@
 #!/bin/bash
 
 
-passwordx=""
+passwordx=$(cat ~/tools/.creds | grep password | awk {'print $3'})
 github_token=""
 
 [ ! -f ~/recon ] || mkdir ~/recon
@@ -23,8 +23,8 @@ github_token=""
 sleep 5
 
 message () {
-	telegram_bot=""
-	telegram_id=""
+	telegram_bot=$(cat ~/tools/.creds | grep "telegram_bot" | awk {'print $3'})
+	telegram_id=$(cat ~/tools/.creds | grep "telegram_id" | awk {'print $3'})
 	alert="https://api.telegram.org/bot$telegram_bot/sendmessage?chat_id=$telegram_id&text="
 	[ -z $telegram_bot ] && [ -z $telegram_id ] || curl -g $alert$1 --silent > /dev/null
 }
@@ -296,7 +296,7 @@ sleep 5
 
 echo "[+] COLLECTING ENDPOINTS FROM GITHUB [+]"
 if [ ! -z $(cat ~/tools/.tokens) ]; then
-	for url in `cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u`; do 
+	for url in `cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u`; do
 		python3 ~/tools/github-endpoints.py -d $url -s -r > ~/recon/$1/github-endpoints/$url.txt
 		sleep 3
 	done
