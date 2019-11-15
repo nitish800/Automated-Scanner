@@ -309,7 +309,7 @@ sleep 5
 echo "[+] COLLECTING ENDPOINTS FROM GITHUB [+]"
 if [ ! -z $(cat ~/tools/.tokens) ]; then
 	for url in `cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u`; do
-		python3 ~/tools/github-endpoints.py -d $url -s -r > ~/recon/$1/github-endpoints/$url.txt
+		python3 ~/tools/github-search/github-endpoints.py -d $url -s -r > ~/recon/$1/github-endpoints/$url.txt
 		sleep 5
 	done
 	message "Done%20collecting%20endpoint%20in%20$1"
