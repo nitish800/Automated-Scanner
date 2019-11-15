@@ -150,20 +150,20 @@ else
 fi
 sleep 5
 
-echo "[+] GOBUSTER SCANNING [+]"
-if [ ! -f ~/recon/$1/$1-gobuster.txt ] && [ ! -z $(which gobuster) ]; then
-	[ ! -f ~/wordlists/all.txt ] && wget "https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt" -O ~/wordlists/all.txt
-	gobuster dns -d $1 -t 300 -w ~/wordlists/all.txt --wildcard -o ~/recon/$1/$1-gobust.txt
-	cat ~/recon/$1/$1-gobust.txt | grep "Found:" | awk {'print $2'} > ~/recon/$1/$1-gobuster.txt
-	rm ~/recon/$1/$1-gobust.txt
-	gobusterscan=`scanned ~/recon/$1/$1-gobuster.txt`
-	message "Gobuster%20Found%20$gobusterscan%20subdomain(s)%20for%20$1"
-	echo "[+] Gobuster Found $gobusterscan subdomains"
-else
-	message "[-]%20Skipping%20Gobuster%20Scanning%20for%20$1"
-	echo "[!] Skipping ..."
-fi
-sleep 5
+# echo "[+] GOBUSTER SCANNING [+]"
+# if [ ! -f ~/recon/$1/$1-gobuster.txt ] && [ ! -z $(which gobuster) ]; then
+# 	[ ! -f ~/wordlists/all.txt ] && wget "https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt" -O ~/wordlists/all.txt
+# 	gobuster dns -d $1 -t 300 -w ~/wordlists/all.txt --wildcard -o ~/recon/$1/$1-gobust.txt
+# 	cat ~/recon/$1/$1-gobust.txt | grep "Found:" | awk {'print $2'} > ~/recon/$1/$1-gobuster.txt
+# 	rm ~/recon/$1/$1-gobust.txt
+# 	gobusterscan=`scanned ~/recon/$1/$1-gobuster.txt`
+# 	message "Gobuster%20Found%20$gobusterscan%20subdomain(s)%20for%20$1"
+# 	echo "[+] Gobuster Found $gobusterscan subdomains"
+# else
+# 	message "[-]%20Skipping%20Gobuster%20Scanning%20for%20$1"
+# 	echo "[!] Skipping ..."
+# fi
+# sleep 5
 
 ## Deleting all the results to less disk usage
 cat ~/recon/$1/$1-amass.txt ~/recon/$1/$1-findomain.txt ~/recon/$1/$1-spyse.txt ~/recon/$1/$1-project-sonar.txt ~/recon/$1/$1-subfinder.txt ~/recon/$1/$1-aquatone.txt ~/recon/$1/$1-sublist3r.txt ~/recon/$1/$1-crt.txt ~/recon/$1/$1-gobuster.txt | sort -uf > ~/recon/$1/$1-final.txt
@@ -231,7 +231,7 @@ cat ~/recon/$1/$1-open-ports.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 
 echo "[+] HTTProbe Scanning Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
-	cat ~/recon/$1/$1-all.txt | httprobe -c 200 > ~/recon/$1/$1-httprobe.txt
+	cat ~/recon/$1/$1-all.txt | sort -u | httprobe -c 200 > ~/recon/$1/$1-httprobe.txt
     httprobesu=`scanned ~/recon/$1/$1-httprobe.txt`
 	message "$httprobesu%20http%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 	echo "[+] $httprobesu alive domains out of $all domains/IPs using httprobe"
@@ -243,7 +243,7 @@ sleep 5
 
 echo "[+] Scanning Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-alive.txt ] && [ ! -z $(which filter-resolved) ]; then
-	cat ~/recon/$1/$1-all.txt | filter-resolved > ~/recon/$1/$1-alive.txt
+	cat ~/recon/$1/$1-all.txt | sort -u | filter-resolved > ~/recon/$1/$1-alive.txt
 	alivesu=`scanned ~/recon/$1/$1-alive.txt`
 	rm ~/recon/$1/$1-all.txt
 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
@@ -257,8 +257,8 @@ diff --new-line-format="" --unchanged-line-format="" <(cat ~/recon/$1/$1-httprob
 
 echo "[+] TKO-SUBS for Subdomain TKO [+]"
 if [ ! -f ~/recon/$1/$1-subover.txt ] && [ ! -z $(which tko-subs) ]; then
-	[ ! -f ~/recon/scanner/providers-data.csv ] && wget "https://raw.githubusercontent.com/anshumanbh/tko-subs/master/providers-data.csv" -O ~/recon/scanner/providers-data.csv
-	tko-subs -domains=~/recon/$1/$1-alive.txt -data=~/recon/scanner/providers-data.csv -output=~/recon/$1/$1-tkosubs.txt
+	[ ! -f ~/recon/scanner/providers-data.csv ] && wget "https://raw.githubusercontent.com/anshumanbh/tko-subs/master/providers-data.csv" -O /root/recon/scanner/providers-data.csv
+	tko-subs -domains=/root/recon/$1/$1-alive.txt -data=/root/recon/scanner/providers-data.csv -output=/root/recon/$1/$1-tkosubs.txt
 	message "TKO-Subs%20scanner%20done%20for%20$1"
 	echo "[+] TKO-Subs scanner is done"
 else
@@ -270,8 +270,8 @@ sleep 5
 echo "[+] SUBJACK for Subdomain TKO [+]"
 if [ ! -f ~/recon/$1/$1-subjack.txt ] && [ ! -z $(which subjack) ]; then
 	[ ! -f ~/recon/scanner/fingerprints.json ] && wget "https://raw.githubusercontent.com/sumgr0/subjack/master/fingerprints.json" -O ~/recon/scanner/fingerprints.json
-	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/recon/scanner/fingerprints.json -v -m -o ~/recon/$1/$1-subtemp.txt
-	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/recon/scanner/fingerprints.json -v -m -ssl -o ~/recon/$1/$1-subtmp.txt
+	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/recon/scanner/fingerprints.json -m -o ~/recon/$1/$1-subtemp.txt
+	subjack -w ~/recon/$1/$1-alive.txt -a -timeout 15 -c ~/recon/scanner/fingerprints.json -m -ssl -o ~/recon/$1/$1-subtmp.txt
 	cat ~/recon/$1/$1-subtemp.txt ~/recon/$1/$1-subtmp.txt | sort -u > ~/recon/$1/$1-subjack.txt
 	rm ~/recon/$1/$1-subtemp.txt ~/recon/$1/$1-subtmp.txt
 	message "subjack%20scanner%20done%20for%20$1"
@@ -284,7 +284,7 @@ sleep 5
 echo "[+] RUNNING PHOTON CRAWLER [+]"
 for urlz in `cat ~/recon/$1/$1-httprobe.txt`; do 
 	filename=`echo $urlz | sed 's/http:\/\///g' | sed 's/https:\/\//ssl-/g'`
-	python ~/tools/Photon/photon.py -u "$urlz" -l 3 -t 10 --keys --wayback -o ~/recon/$1/photon/$filename
+	python3 ~/tools/Photon/photon.py -u "$urlz" -l 3 -t 10 --keys --wayback -o ~/recon/$1/photon/$filename
 done
 message "Done%20crawling%20$1"
 echo "[+] Done crawling"
