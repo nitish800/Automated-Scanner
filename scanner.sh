@@ -232,7 +232,7 @@ cat ~/recon/$1/$1-open-ports.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 echo "[+] HTTProbe Scanning Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
 	cat ~/recon/$1/$1-all.txt | httprobe -c 200 > ~/recon/$1/$1-httprobe.txt
-        httprobesu=`scanned ~/recon/$1/$1-httprobe.txt`
+    httprobesu=`scanned ~/recon/$1/$1-httprobe.txt`
 	message "$httprobesu%20http%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 	echo "[+] $alivesu alive domains out of $all domains/IPs using httprobe"
 else
