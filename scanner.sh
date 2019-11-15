@@ -284,7 +284,7 @@ sleep 5
 echo "[+] RUNNING PHOTON CRAWLER [+]"
 for urlz in `cat ~/recon/$1/$1-httprobe.txt`; do 
 	filename=`echo $urlz | sed 's/http:\/\///g' | sed 's/https:\/\//ssl-/g'`
-		python ~/tools/Photon/photon.py -u "$urlz" -l 3 -t 10 --keys --wayback -o ~/recon/$1/photon/$filename.txt
+	python ~/tools/Photon/photon.py -u "$urlz" -l 3 -t 10 --keys --wayback -o ~/recon/$1/photon/$filename
 done
 message "Done%20crawling%20$1"
 echo "[+] Done crawling"
