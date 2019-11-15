@@ -11,12 +11,14 @@ github_token=""
 [ ! -f ~/recon ] && mkdir ~/recon
 [ ! -f ~/recon/$1 ] && mkdir ~/recon/$1
 [ ! -f ~/recon/$1/whatweb ] && mkdir ~/recon/$1/whatweb
+[ ! -f ~/recon/$1/webanalyze ] && mkdir ~/recon/$1/webanalyze
 [ ! -f ~/recon/$1/eyewitness ] && mkdir ~/recon/$1/eyewitness
 [ ! -f ~/recon/$1/shodan ] && mkdir ~/recon/$1/shodan
 [ ! -f ~/recon/$1/dirsearch ] && mkdir ~/recon/$1/dirsearch
 [ ! -f ~/recon/$1/default-credential ] && mkdir ~/recon/$1/default-credential
 [ ! -f ~/recon/$1/virtual-hosts ] && mkdir ~/recon/$1/virtual-hosts
 [ ! -f ~/recon/$1/endpoints ] && mkdir ~/recon/$1/endpoints
+[ ! -f ~/recon/$1/photon ] && mkdir ~/recon/$1/photon
 [ ! -f ~/recon/$1/github-endpoints ] && mkdir ~/recon/$1/github-endpoints
 [ ! -f ~/recon/$1/otxurls ] && mkdir ~/recon/$1/otxurls
 [ ! -f ~/recon/$1/waybackurls ] && mkdir ~/recon/$1/waybackurls
@@ -34,7 +36,7 @@ scanned () {
 }
 
 #message "Initiating%20scan%20:%20$1"
-message "[+]%20Initiating%20scan%20%3A%20$1%20[+]"
+message "[%3B]%20Initiating%20scan%20%3A%20$1%20[%3B]"
 
 echo "[+] AMASS SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-amass.txt ] && [ ! -z $(which amass) ]; then
@@ -223,7 +225,8 @@ else
 fi
 sleep 5
 
-cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'} | sort -u > ~/recon/$1/$1-open-ports.txt  
+#cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'} | sort -u > ~/recon/$1/$1-open-ports.txt  
+cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F '/' {'print $1'} | sed 's/:80$//g' | sed 's/:443$//g' | sort -u > ~/recon/$1/$1-open-ports.txt
 cat ~/recon/$1/$1-open-ports.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 
 echo "[+] HTTProbe Scanning Alive Hosts [+]"
@@ -278,6 +281,15 @@ else
 fi
 sleep 5
 
+echo "[+] RUNNING PHOTON CRAWLER [+]"
+for urlz in `cat ~/recon/$1/$1-httprobe.txt`; do 
+	filename=`echo $urlz | sed 's/http:\/\///g' | sed 's/https:\/\//ssl-/g'`
+		python ~/tools/Photon/photon.py -u "$urlz" -l 3 -t 10 --keys --wayback -o ~/recon/$1/photon/$filename.txt
+done
+message "Done%20crawling%20$1"
+echo "[+] Done crawling"
+sleep 5
+
 echo "[+] COLLECTING ENDPOINTS [+]"
 for urlz in `cat ~/recon/$1/$1-httprobe.txt`; do 
 	filename=`echo $urlz | sed 's/http:\/\///g' | sed 's/https:\/\//ssl-/g'`
@@ -298,7 +310,7 @@ echo "[+] COLLECTING ENDPOINTS FROM GITHUB [+]"
 if [ ! -z $(cat ~/tools/.tokens) ]; then
 	for url in `cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u`; do
 		python3 ~/tools/github-endpoints.py -d $url -s -r > ~/recon/$1/github-endpoints/$url.txt
-		sleep 3
+		sleep 5
 	done
 	message "Done%20collecting%20endpoint%20in%20$1"
 	echo "[+] Done collecting endpoint"
@@ -369,14 +381,29 @@ else
 fi
 sleep 5
 
-echo "[+] WHATWEB SCANNING FOR FINGERPRINTING [+]"
-if [ ! -z $(which whatweb) ]; then
-	for d in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F "/" {'print $1'}`;do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
-	for d in `cat ~/recon/$1/$1-alive.txt`; do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
-	message "Done%20whatweb%20for%20fingerprinting%20$1"
-	echo "[+] Done whatweb for fingerprinting the assets!"
+# echo "[+] WHATWEB SCANNING FOR FINGERPRINTING [+]"
+# if [ ! -z $(which whatweb) ]; then
+# 	for d in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F "/" {'print $1'}`;do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
+# 	for d in `cat ~/recon/$1/$1-alive.txt`; do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
+# 	message "Done%20whatweb%20for%20fingerprinting%20$1"
+# 	echo "[+] Done whatweb for fingerprinting the assets!"
+# else
+# 	message "[-]%20Skipping%20whatweb%20for%20fingerprinting%20$1"
+# 	echo "[!] Skipping ..."
+# fi
+# sleep 5
+
+echo "[+] WEBANALYZE SCANNING FOR FINGERPRINTING [+]"
+if [ ! -z $(which webanalyze) ]; then
+	[ ! -f ~/tools/apps.json ] && wget "https://raw.githubusercontent.com/AliasIO/Wappalyzer/master/src/apps.json" -O ~/tools/apps.json
+	for target in `cat ~/recon/$1/$1-httprobe.txt`; do
+		filename=`echo $target | sed 's/http:\/\///g' | sed 's/https:\/\//ssl-/g'`
+		webanalyze -host $target -apps ~/tools/apps.json > ~/recon/$1/webanalyze/$filename.txt
+	done
+	message "Done%20webanalyze%20for%20fingerprinting%20$1"
+	echo "[+] Done webanalyze for fingerprinting the assets!"
 else
-	message "[-]%20Skipping%20whatweb%20for%20fingerprinting%20$1"
+	message "[-]%20Skipping%20webanalyze%20for%20fingerprinting%20$1"
 	echo "[!] Skipping ..."
 fi
 sleep 5
