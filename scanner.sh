@@ -228,7 +228,7 @@ cat ~/recon/$1/$1-open-ports.txt ~/recon/$1/$1-final.txt > ~/recon/$1/$1-all.txt
 
 echo "[+] HTTProbe Scanning Alive Hosts [+]"
 if [ ! -f ~/recon/$1/$1-httprobe.txt ] && [ ! -z $(which httprobe) ]; then
-	cat ~/$1/$1-all.txt | httprobe -c 100 > ~/recon/$1/$1-httprobe.txt
+	cat ~/$1/$1-all.txt | httprobe -c 200 > ~/recon/$1/$1-httprobe.txt
 	alivesu=`scanned ~/recon/$1/$1-httprobe.txt`
 	message "$alivesu%20alive%20domains%20out%20of%20$all%20domains%20in%20$1"
 	echo "[+] $alivesu alive domains out of $all domains/IPs using httprobe"
@@ -326,7 +326,7 @@ fi
 sleep 5	
 
 echo "[+] EYEWITNESS SCREENSHOT [+]"
-if [ ! -z $(which eyewitness) ]; then
+if [ ! -z $(which ~/tools/EyeWitness/EyeWitness.py) ]; then
 	python3 ~/tools/EyeWitness/EyeWitness.py -f ~/recon/$1/$1-httprobe.txt --web --timeout 10 --no-dns --no-prompt --cycle all -d ~/recon/$1/eyewitness
 	message "Done%20Eyewitness%20for%20Screenshot%20for%20$1"
 	echo "[+] Done eyewitness for screenshot of Alive assets"
@@ -400,7 +400,7 @@ sleep 5
 echo "[+] Scanning for Virtual Hosts Resolution [+]"
 if [ ! -z $(which ffuf) ]; then
 	[ ! -f ~/recon/scanner/virtual-host-scanning.txt ] && wget "https://raw.githubusercontent.com/codingo/VHostScan/master/VHostScan/wordlists/virtual-host-scanning.txt" -O ~/recon/scanner/virtual-host-scanning.txt
-	cat ~/recon/$1/$1-final.txt ~/recon/$1/$1-diff.txt | tok | cat ~/recon/scanner/virtual-host-scanning.txt | sort -u >> ~/recon/$1/$1-temp-vhost-wordlist.txt
+	cat ~/recon/$1/$1-final.txt ~/recon/$1/$1-diff.txt | tok | cat ~/recon/scanner/virtual-host-scanning.txt | sort -u > ~/recon/$1/$1-temp-vhost-wordlist.txt
 	path=$(pwd)
 	ffuf -c -w "$path/recon/$1/$1-temp-vhost-wordlist.txt:HOSTS" -w "$path/recon/$1/$1-open-ports.txt:TARGETS" -u http://TARGETS -k -H "Host: HOSTS" -mc all -fc 500-599 -o ~/recon/$1/virtual-hosts/$1.txt
 	ffuf -c -w "$path/recon/$1/$1-temp-vhost-wordlist.txt:HOSTS" -w "$path/recon/$1/$1-open-ports.txt:TARGETS" -u https://TARGETS -k -H "Host: HOSTS" -mc all -fc 500-599 -o ~/recon/$1/virtual-hosts/$1-ssl.txt
@@ -415,7 +415,7 @@ sleep 5
 
 echo "[+] DirSearch Scanning for Sensitive Files [+]"
 [ ! -f ~/wordlists/newlist.txt ] && echo "visit https://github.com/phspade/Combined-Wordlists/"
-cat ~/recon/$1/$1-httprobe.txt | xargs -P10 -I % sh -c "python3 ~/tools/dirsearch/dirsearch.py -u % -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config,save,rsa,ppk -x 400,403,401,500,406,503,502 -t 200 --random-agents -b --plain-text-report ~/recon/$1/dirsearch/%-dirsearch.txt"
+cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | sort -u | xargs -P10 -I % sh -c "python3 ~/tools/dirsearch/dirsearch.py -u % -e php,bak,txt,asp,aspx,jsp,html,zip,jar,sql,json,old,gz,shtml,log,swp,yaml,yml,config,save,rsa,ppk -x 400,403,401,500,406,503,502 -t 200 --random-agents -b --plain-text-report ~/recon/$1/dirsearch/%-dirsearch.txt"
 echo "[+] Done dirsearch for file and directory scanning"
 sleep 5
 
