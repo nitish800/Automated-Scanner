@@ -36,7 +36,7 @@ scanned () {
 }
 
 #message "Initiating%20scan%20:%20$1"
-message "[%3B]%20Initiating%20scan%20%3A%20$1%20[%3B]"
+message "[%2B]%20Initiating%20scan%20%3A%20$1%20[%2B]"
 
 echo "[+] AMASS SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-amass.txt ] && [ ! -z $(which amass) ]; then
