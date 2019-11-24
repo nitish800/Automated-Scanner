@@ -381,17 +381,17 @@ else
 fi
 sleep 5
 
-# echo "[+] WHATWEB SCANNING FOR FINGERPRINTING [+]"
-# if [ ! -z $(which whatweb) ]; then
-# 	for d in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F "/" {'print $1'}`;do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
-# 	for d in `cat ~/recon/$1/$1-alive.txt`; do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
-# 	message "Done%20whatweb%20for%20fingerprinting%20$1"
-# 	echo "[+] Done whatweb for fingerprinting the assets!"
-# else
-# 	message "[-]%20Skipping%20whatweb%20for%20fingerprinting%20$1"
-# 	echo "[!] Skipping ..."
-# fi
-# sleep 5
+echo "[+] WHATWEB SCANNING FOR FINGERPRINTING [+]"
+if [ ! -z $(which whatweb) ]; then
+	for d in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F "/" {'print $1'}`;do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
+	for d in `cat ~/recon/$1/$1-alive.txt`; do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
+	message "Done%20whatweb%20for%20fingerprinting%20$1"
+	echo "[+] Done whatweb for fingerprinting the assets!"
+else
+	message "[-]%20Skipping%20whatweb%20for%20fingerprinting%20$1"
+	echo "[!] Skipping ..."
+fi
+sleep 5
 
 echo "[+] WEBANALYZE SCANNING FOR FINGERPRINTING [+]"
 if [ ! -z $(which webanalyze) ]; then
