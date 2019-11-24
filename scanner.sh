@@ -446,7 +446,8 @@ cat ~/recon/$1/$1-httprobe.txt | sed 's/http:\/\///g' | sed 's/https:\/\///g' | 
 echo "[+] Done dirsearch for file and directory scanning"
 sleep 5
 
-[ ! -f ~/$1.out ] && mv $1.out ~/recon/$1/ 
+find ~/recon/$1 -type f -empty
+
 message "Scanner%20Done%20for%20$1"
 date
 echo "[+] Done scanner :)"
