@@ -464,6 +464,7 @@ sleep 5
 
 echo "[+] Removing empty files collected during the scan [+]"
 find ~/recon/$1 -type f -empty
+rm ~/recon/geckodriver.log
 
 [ ! -f ~/$1.out ] && mv $1.out ~/recon/$1/ 
 message "Scanner%20Done%20for%20$1"
