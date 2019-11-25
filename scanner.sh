@@ -11,6 +11,7 @@ github_token=""
 [ ! -f ~/recon ] && mkdir ~/recon
 [ ! -f ~/recon/$1 ] && mkdir ~/recon/$1
 [ ! -f ~/recon/$1/whatweb ] && mkdir ~/recon/$1/whatweb
+[ ! -f ~/recon/$1/cors ] && mkdir ~/recon/$1/cors
 [ ! -f ~/recon/$1/webanalyze ] && mkdir ~/recon/$1/webanalyze
 [ ! -f ~/recon/$1/eyewitness ] && mkdir ~/recon/$1/eyewitness
 [ ! -f ~/recon/$1/shodan ] && mkdir ~/recon/$1/shodan
@@ -40,8 +41,10 @@ message "[%2B]%20Initiating%20scan%20%3A%20$1%20[%2B]"
 
 echo "[+] AMASS SCANNING [+]"
 if [ ! -f ~/recon/$1/$1-amass.txt ] && [ ! -z $(which amass) ]; then
-	amass enum -active -brute -d $1 -o ~/recon/$1/$1-amass.txt -config ~/config.ini
-	#amass enum -passive -d $1 -o ~/recon/$1/$1-amass.txt
+	amass enum -active -brute -d $1 -o ~/recon/$1/$1-amass_brute.txt -config ~/config.ini
+	amass enum -passive -d $1 -o ~/recon/$1/$1-amass_pass.txt
+	sleep 3
+	cat ~/recon/$1/$1-amass_brute.txt ~/recon/$1/$1-amass_pass.txt | sort -u | tee -a ~/recon/$1/$1-amass.txt && rm ~/recon/$1/$1-amass_pass.txt ~/recon/$1/$1-amass_brute.txt
 	amasscan=`scanned ~/recon/$1/$1-amass.txt`
 	message "Amass%20Found%20$amasscan%20subdomain(s)%20for%20$1"
 	echo "[+] Amass Found $amasscan subdomains"
@@ -381,6 +384,17 @@ else
 fi
 sleep 5
 
+echo "[+] SCANNING for CORS MISCONFIGURATION [+]"
+if [ -e ~/tools/Corsy/corsy.py ]; then
+	for url in 'cat ~/recon/$1/$1-httprobe.txt'; do python3 ~/tools/Corsy/corsy.py -u $url | tee -a ~/recon/$1/cors/$url.txt; done
+	message "Scanning%20for%20CORS%20Misconfiguration%20done%20for%20$1"
+	echo "[+] Done scanning for CORS Misconfiguration"
+else
+	message "[-]%20Skipping%20CORS%20Misconfiguration%20Scanning%20for%20$1"
+	echo "[!] Skipping ..."
+fi
+sleep 5
+
 echo "[+] WHATWEB SCANNING FOR FINGERPRINTING [+]"
 if [ ! -z $(which whatweb) ]; then
 	for d in `cat ~/recon/$1/$1-masscan.txt | grep "Host:" | awk {'print $2":"$5'} | awk -F "/" {'print $1'}`;do whatweb $d | sed 's/, /  \r\n/g' >> ~/recon/$1/whatweb/$d-whatweb.txt; done
@@ -450,6 +464,7 @@ sleep 5
 echo "[+] Removing empty files collected during the scan [+]"
 find ~/recon/$1 -type f -empty
 
+[ ! -f ~/$1.out ] && mv $1.out ~/recon/$1/ 
 message "Scanner%20Done%20for%20$1"
 date
 echo "[+] Done scanner :)"
