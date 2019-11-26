@@ -182,8 +182,8 @@ if [ ! -f ~/recon/$1/$1-dnsgen.txt ] && [ ! -z $(which dnsgen) ]; then
 	rm ~/recon/$1/$1-dnsgen.tmp
 	sleep 3
 	dnsgens=`scanned ~/recon/$1/$1-dnsgen.txt`
-	message "DNSGEN%20generates%20$dnsgens%20subdomain(s)%20for%20$1"
-	echo "[+] DNSGEN generate $dnsgens subdomains"
+	message "DNSGEN%20generated%20$dnsgens%20subdomain(s)%20for%20$1"
+	echo "[+] DNSGEN generated $dnsgens subdomains"
 else
 	message "[-]%20Skipping%20DNSGEN%20Scanning%20for%20$1"
 	echo "[!] Skipping ..."
