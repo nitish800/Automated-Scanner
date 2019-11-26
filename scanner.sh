@@ -199,12 +199,13 @@ sleep 3
 
 # collecting all IP from collected subdomains & segregating cloudflare IP from non-cloudflare IP
 ## non-sense if I scan cloudflare IP. :(
+echo "[+] COLLECTING IPs FROM SUBDOMAINS & SEGREGATING CLOUDFLARE IPs [+]"
 ulimit -n 800000
 iprange="173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/12 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32"
-while read -r domain; do 
-    ip=`dig +short $domain | grep -v '[[:alpha:]]'`
-    grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "[!] $ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ipf.txt &
-done < ~/recon/$1/$1-final.txt
+	while read -r domain; do 
+    	ip=`dig +short $domain | grep -v '[[:alpha:]]'`
+    	grepcidr "$iprange" <(echo "$ip") >/dev/null && echo "[!] $ip is cloudflare" || echo "$ip" >> ~/recon/$1/$1-ipf.txt &
+	done < ~/recon/$1/$1-final.txt
 
 cat ~/recon/$1/$1-ipf.txt | sort -u | sed '/^[[:space:]]*$/d' > ~/recon/$1/$1-ip.txt
 
