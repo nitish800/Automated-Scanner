@@ -16,7 +16,7 @@ gem install aquatone
 
 pip3 install spyse
 
-go get -v github.com/projectdiscovery/subfinder/cmd/subfinderr
+go get -v github.com/projectdiscovery/subfinder/cmd/subfinder
 go get github.com/OJ/gobuster
 go get github.com/lc/otxurls
 go get github.com/tomnomnom/waybackurls
